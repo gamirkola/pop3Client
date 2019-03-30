@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1553946929 source:/home/mirko/Documenti/codeblocks/pop3Client/main.c
+	<stdio.h>
+	<stdlib.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<netinet/in.h>
+	<netdb.h>
+

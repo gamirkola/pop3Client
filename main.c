@@ -19,7 +19,7 @@ int main(int argc,char* argv[])
   struct hostent *h;
   int sock;
   int errore;
-  char msg[2048];
+  char *msg[4096];
 
   //Tipo di indirizzo
   temp.sin_family=AF_INET;
@@ -36,25 +36,51 @@ int main(int argc,char* argv[])
   //Connessione del socket. Esaminare errore per compiere azioni
   //opportune in caso di errore.
   errore=connect(sock, (struct sockaddr*) &temp, sizeof(temp));
+  const char *buf[4096] = { 0 };
+  const char *buf1[4096] = { 0 };
+  const char *buf2[4096] = { 0 };
+  const char *buf3[4096] = { 0 };
+  const char *buf4[4096] = { 0 };
+  if ( recv (sock, buf, 4096, 0) == -1){
+       printf ("Error in recvng message\n");
+       exit (-1);
+     }
+  printf(buf);
 
   //Spedisco il messaggio voluto
-    if (write(sock,"USER mirko",strlen("USER mirko"))<0)
-      {
+    if (send(sock,"USER mirko\n",strlen("USER mirko\n"),0)<0){
         printf("Impossibile mandare il messaggio.\n");
-        close(sock);
-        exit(1);
-      }
-      if(recv(sock,msg,sizeof(msg),0)<0)
-        printf("errore di ricezione");
-      else
-        printf("messaggio dal server:", msg);
-      if (write(sock,"PASS mirko",strlen("PASS mirko"))<0)
-      {
+    }
+    if ( recv (sock, buf1, 4096, 0) == -1){
+       printf ("Error in recvng message\n");
+       exit (-1);
+     }
+  printf(buf1);
+    if (send(sock,"PASS mirko\n",strlen("PASS mirko\n"),0)<0){
         printf("Impossibile mandare il messaggio.\n");
-        close(sock);
-        exit(1);
-      }
-      printf("Messaggio spedito con successo.\n");
+    }
+    if ( recv (sock, buf2, 4096, 0) == -1){
+       printf ("Error in recvng message\n");
+       exit (-1);
+     }
+  printf(buf2);
+  if (send(sock,"LIST\n",strlen("LIST\n"),0)<0){
+        printf("Impossibile mandare il messaggio.\n");
+    }
+    if ( recv (sock, buf3, 4096, 0) == -1){
+       printf ("Error in recvng message\n");
+       exit (-1);
+     }
+  printf(buf3);
+  if (send(sock,"RETR 1\n",strlen("RETR 1\n"),0)<0){
+        printf("Impossibile mandare il messaggio.\n");
+    }
+    if ( recv (sock, buf4, 4096, 0) == -1){
+       printf ("Error in recvng message\n");
+       exit (-1);
+     }
+  printf(buf4);
+
 
   //Chiudo il socket.
   close(sock);
