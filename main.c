@@ -8,8 +8,24 @@
 #include <netdb.h>
 
 
+int Invia(int sock, char *comando[]){
+    printf(comando);
+    if(send(sock,comando,strlen(comando),0)<0){
+        return -1;
+    }
+    return 2;
+}
 
+int Ricevi(int sock){
+    char *buf[4096] = { 0 };
 
+    if ( recv (sock, buf, 4096, 0) == -1){
+       return -1;
+     }
+    printf(buf);
+
+    return 2;
+}
 
 int main(int argc,char* argv[])
 {
@@ -24,6 +40,9 @@ int main(int argc,char* argv[])
   //Tipo di indirizzo
   temp.sin_family=AF_INET;
   temp.sin_port=htons(110);
+//  printf("Inserisci l'indirizo del server di posta:"); //18.195.169.69
+//  char srv[20];
+//  fgets(srv, 20, stdin);
   h=gethostbyname("18.195.169.69");
   if (h==0)
   {
@@ -36,51 +55,30 @@ int main(int argc,char* argv[])
   //Connessione del socket. Esaminare errore per compiere azioni
   //opportune in caso di errore.
   errore=connect(sock, (struct sockaddr*) &temp, sizeof(temp));
-  const char *buf[4096] = { 0 };
-  const char *buf1[4096] = { 0 };
-  const char *buf2[4096] = { 0 };
-  const char *buf3[4096] = { 0 };
-  const char *buf4[4096] = { 0 };
-  if ( recv (sock, buf, 4096, 0) == -1){
-       printf ("Error in recvng message\n");
-       exit (-1);
-     }
-  printf(buf);
+  if(Ricevi(sock)==1){
+    printf("errore di ricezione\n");
+  }
 
-  //Spedisco il messaggio voluto
-    if (send(sock,"USER mirko\n",strlen("USER mirko\n"),0)<0){
-        printf("Impossibile mandare il messaggio.\n");
-    }
-    if ( recv (sock, buf1, 4096, 0) == -1){
-       printf ("Error in recvng message\n");
-       exit (-1);
-     }
-  printf(buf1);
-    if (send(sock,"PASS mirko\n",strlen("PASS mirko\n"),0)<0){
-        printf("Impossibile mandare il messaggio.\n");
-    }
-    if ( recv (sock, buf2, 4096, 0) == -1){
-       printf ("Error in recvng message\n");
-       exit (-1);
-     }
-  printf(buf2);
-  if (send(sock,"LIST\n",strlen("LIST\n"),0)<0){
-        printf("Impossibile mandare il messaggio.\n");
-    }
-    if ( recv (sock, buf3, 4096, 0) == -1){
-       printf ("Error in recvng message\n");
-       exit (-1);
-     }
-  printf(buf3);
-  if (send(sock,"RETR 1\n",strlen("RETR 1\n"),0)<0){
-        printf("Impossibile mandare il messaggio.\n");
-    }
-    if ( recv (sock, buf4, 4096, 0) == -1){
-       printf ("Error in recvng message\n");
-       exit (-1);
-     }
-  printf(buf4);
+  while(1){
 
+    printf("Inserisci un comando: ");
+    char str[20];
+    fgets(str, 20, stdin);
+
+    if(strcmp(str,"esci")){
+        exit(1);
+    }
+
+    if(Invia(sock,str)==-1){
+        printf ("Errore di invio\n");
+        exit(1);
+    }
+    if(Ricevi(sock)==-1){
+        printf ("Errore di ricezione\n");
+        exit(1);
+    }
+
+  }
 
   //Chiudo il socket.
   close(sock);
