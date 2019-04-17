@@ -9,20 +9,19 @@
 #include <malloc.h>
 #include <string.h>
 
-int str_comp(char a[], char b[])
-{
-   int c = 0;
+int str_comp(char a[], char b[]){
+    int c = 0;
 
-   while (a[c] == b[c]) {
-      if (a[c] == '\n')
-         break;
-      c++;
-   }
+    while (a[c] == b[c]) {
+        if (a[c] == '\n')
+            break;
+        c++;
+    }
 
-   if (a[c] == '\n')
-      return 0;
-   else
-      return -1;
+    if (a[c] == '\n')
+        return 0;
+    else
+        return -1;
 }
 
 void Invia(int sock, char *comando[]){
@@ -47,35 +46,33 @@ void Ricevi(int sock){
     return;
 }
 
-int main(int argc,char* argv[])
-{
+int main(int argc,char* argv[]){
 
-  //Creo e connetto il socket
-  struct sockaddr_in temp;
-  struct hostent *h;
-  int sock;
-  int errore;
-  char *msg = (char *)malloc(sizeof(char *)*2048);
+    //Creo e connetto il socket
+    struct sockaddr_in temp;
+    struct hostent *h;
+    int sock;
+    int errore;
+    char *msg = (char *)malloc(sizeof(char *)*2048);
 
-  //Tipo di indirizzo
-  temp.sin_family=AF_INET;
-  temp.sin_port=htons(110);
+    //Tipo di indirizzo
+    temp.sin_family=AF_INET;
+    temp.sin_port=htons(110);
 
-  h=gethostbyname("18.195.169.69");
+    h=gethostbyname("18.195.169.69");
 
-  if (h==0)
-  {
-    printf("Gethostbyname fallito\n");
-    exit(-1);
-  }
+    if (h==0){
+        printf("Gethostbyname fallito\n");
+        exit(-1);
+    }
 
-  bcopy(h->h_addr,&temp.sin_addr,h->h_length);
-  //Creazione socket.
-  sock=socket(AF_INET,SOCK_STREAM,0);
-  //Connessione del socket. Esaminare errore per compiere azioni
-  //opportune in caso di errore.
-  errore=connect(sock, (struct sockaddr*) &temp, sizeof(temp));
-  Ricevi(sock);
+    bcopy(h->h_addr,&temp.sin_addr,h->h_length);
+    //Creazione socket.
+    sock=socket(AF_INET,SOCK_STREAM,0);
+    //Connessione del socket. Esaminare errore per compiere azioni
+    //opportune in caso di errore.
+    errore=connect(sock, (struct sockaddr*) &temp, sizeof(temp));
+    Ricevi(sock);
 
     while(1){
 
@@ -84,19 +81,19 @@ int main(int argc,char* argv[])
 
 
         if(str_comp(msg,"esci")==0){
-            printf ("Grazie di avermi utilizzato! alla prossima\n");
-            close(sock);
-            return 0;
+        printf ("Grazie di avermi utilizzato! alla prossima\n");
+        close(sock);
+        return 0;
         }
-//        printf(msg);
+        //        printf(msg);
         Invia(sock, msg);
 
         Ricevi(sock);
     }
-     free(msg);
+    free(msg);
 
-  //Chiudo il socket.
-  close(sock);
+    //Chiudo il socket.
+    close(sock);
 
-  return 0;
+return 0;
 }
