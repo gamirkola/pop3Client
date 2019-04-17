@@ -7,7 +7,23 @@
 //"netdb" per "gethostbyname"
 #include <netdb.h>
 #include <malloc.h>
+#include <string.h>
 
+int str_comp(char a[], char b[])
+{
+   int c = 0;
+
+   while (a[c] == b[c]) {
+      if (a[c] == '\n')
+         break;
+      c++;
+   }
+
+   if (a[c] == '\n')
+      return 0;
+   else
+      return -1;
+}
 
 void Invia(int sock, char *comando[]){
     if(send(sock,comando,strlen(comando),0)<0){
@@ -24,8 +40,9 @@ void Ricevi(int sock){
         printf ("Errore di ricezione\n");
         exit(-1);
     }
+
     printf(buf);
-    free(buf);
+    buf = "";
 
     return;
 }
@@ -38,14 +55,12 @@ int main(int argc,char* argv[])
   struct hostent *h;
   int sock;
   int errore;
-  char msg[256];
+  char *msg = (char *)malloc(sizeof(char *)*2048);
 
   //Tipo di indirizzo
   temp.sin_family=AF_INET;
   temp.sin_port=htons(110);
-//  printf("Inserisci l'indirizo del server di posta:"); //18.195.169.69
-//  char srv[20];
-//  fgets(srv, 20, stdin);
+
   h=gethostbyname("18.195.169.69");
 
   if (h==0)
@@ -62,26 +77,23 @@ int main(int argc,char* argv[])
   errore=connect(sock, (struct sockaddr*) &temp, sizeof(temp));
   Ricevi(sock);
 
-while(1){
+    while(1){
 
-    printf("Inserisci un comando: ");
-    fgets(msg, sizeof(msg), stdin);
-//    if('\n' == msg[strlen(msg) - 1])
-//        msg[strlen(msg) - 1] = '\0';
-   //strcat(msg, "\n");
-//    printf(msg);
+        printf("Inserisci un comando: ");
+        fgets(msg, 2048, stdin);
 
 
-//    if(send(sock,msg,strlen(msg),0)<0){
-//        printf ("Errore di invio\n");
-//        exit(-1);
-//    }
-    Invia(sock, msg);
+        if(str_comp(msg,"esci")==0){
+            printf ("Grazie di avermi utilizzato! alla prossima\n");
+            close(sock);
+            return 0;
+        }
+//        printf(msg);
+        Invia(sock, msg);
 
-    //printf(msg);
-    Ricevi(sock);
-}
-
+        Ricevi(sock);
+    }
+     free(msg);
 
   //Chiudo il socket.
   close(sock);
