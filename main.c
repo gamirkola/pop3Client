@@ -2,98 +2,83 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-//"in" per "sockaddr_in"
 #include <netinet/in.h>
-//"netdb" per "gethostbyname"
 #include <netdb.h>
 #include <malloc.h>
 #include <string.h>
+#include <zconf.h>
 
-int str_comp(char a[], char b[]){
-    int c = 0;
+#define HOSTNAME "18.195.169.69"
+#define PORT 110
+#define BUFLEN 4096
 
-    while (a[c] == b[c]) {
-        if (a[c] == '\n')
-            break;
-        c++;
-    }
-
-    if (a[c] == '\n')
-        return 0;
-    else
-        return -1;
+/**
+ * Esce con messaggio.
+ * se errorstr é uguale a NULL, allora il messaggio di errore viene fornito dal sistema.
+ */
+int die(int code, const char * errorstr){
+    if(errorstr == NULL){
+        char errbuf[255];
+        snprintf(errbuf, 255, "Uscendo con errore %i", code);
+        perror(errbuf);
+    } else
+        fprintf(stderr, "Uscendo con errore %i: %s", code, errorstr);
+    exit(code);
+    return 1;
 }
 
-void Invia(int sock, char *comando[]){
-    if(send(sock,comando,strlen(comando),0)<0){
-        printf ("Errore di invio\n");
-        exit(-1);
-    }
-    return;
+void invia(int sock, const char *comando) {
+    ssize_t sent = send(sock, comando, strlen(comando), 0);
+    if (sent < 0) die(-126, "Errore di invio");
 }
 
-void Ricevi(int sock){
-    char *buf = (char *) malloc(sizeof(char *) * 4096);
+void ricevi(int sock, char *buf, int msglen) {
 
-    if ( recv (sock, buf, 4096, 0)<0){
-        printf ("Errore di ricezione\n");
-        exit(-1);
-    }
+    ssize_t len = recv(sock, buf, msglen - 1 , 0);
+    if (len < 0) die(-125, "Errore di ricezione");
+    buf[len] = 0; //string terminator overriding \n
+    printf("%s> %s", HOSTNAME, buf);
 
-    printf(buf);
-    buf = "";
-
-    return;
 }
 
-int main(int argc,char* argv[]){
+int main(int argc, char *argv[]) {
 
-    //Creo e connetto il socket
-    struct sockaddr_in temp;
-    struct hostent *h;
+    printf("Connessione in corso... ");
+    fflush(stdout);
+
+    //Ottiene indirizzo di connessione
+    struct hostent * h = (struct hostent *) gethostbyname(HOSTNAME);
+    if(h == NULL) die(-1, "Impossibile ottenere l'hostname");
+
     int sock;
-    int errore;
-    char *msg = (char *)malloc(sizeof(char *)*2048);
+    char * msg = (char *) malloc(sizeof(char) * BUFLEN);
 
-    //Tipo di indirizzo
-    temp.sin_family=AF_INET;
-    temp.sin_port=htons(110);
+    //Parametri della connessione
+    struct sockaddr_in temp;
+    temp.sin_family = AF_INET;
+    temp.sin_port = htons(PORT);
 
-    h=gethostbyname("18.195.169.69");
+    bcopy(h->h_addr, &temp.sin_addr, h->h_length);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    int errore = connect(sock, (struct sockaddr *) &temp, sizeof(temp));
+    if(errore != 0) die(errore, NULL);
 
-    if (h==0){
-        printf("Gethostbyname fallito\n");
-        exit(-1);
+    printf("connesso\nScrivi \"esci\" per uscire.\n\n");
+
+    ricevi(sock, msg, BUFLEN);
+
+    while (1) {
+
+        printf("client ready > ");
+        fgets(msg, BUFLEN, stdin);
+
+        if (!strcmp(msg, "esci\n")) break;
+
+        invia(sock, msg);
+        ricevi(sock, msg, BUFLEN);
     }
 
-    bcopy(h->h_addr,&temp.sin_addr,h->h_length);
-    //Creazione socket.
-    sock=socket(AF_INET,SOCK_STREAM,0);
-    //Connessione del socket. Esaminare errore per compiere azioni
-    //opportune in caso di errore.
-    errore=connect(sock, (struct sockaddr*) &temp, sizeof(temp));
-    Ricevi(sock);
-
-    while(1){
-
-        printf("Inserisci un comando: ");
-        fgets(msg, 2048, stdin);
-
-
-        if(str_comp(msg,"esci")==0){
-        printf ("Grazie di avermi utilizzato! alla prossima\n");
-        close(sock);
-        return 0;
-        }
-        //        printf(msg);
-        Invia(sock, msg);
-
-        Ricevi(sock);
-    }
-    free(msg);
-
-    //Chiudo il socket.
+    printf("Grazie di avermi utilizzato! alla prossima!\n");
     close(sock);
-
-return 0;
+    return 0;
 }
